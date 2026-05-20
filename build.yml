@@ -1,0 +1,47 @@
+name: Build macOS App
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:  # allows manual trigger from GitHub UI
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Build app with PyInstaller
+        run: |
+          pyinstaller \
+            --onefile \
+            --windowed \
+            --name "FileForge" \
+            --hidden-import PIL \
+            --hidden-import PIL.Image \
+            --hidden-import img2pdf \
+            --hidden-import cairosvg \
+            --hidden-import cairocffi \
+            --hidden-import cssselect2 \
+            --hidden-import tinycss2 \
+            app.py
+
+      - name: Zip the .app
+        run: zip -r FileForge-macOS.zip dist/FileForge.app
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FileForge-macOS
+          path: FileForge-macOS.zip
+          retention-days: 30
